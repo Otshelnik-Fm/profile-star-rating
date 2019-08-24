@@ -56,7 +56,17 @@ function psr_star_box() {
     return $out;
 }
 
-// вывод перед  счетчиками
+// запрет удалением реколл данных если вырезали их во фронте
+add_filter( 'rcl_pre_update_profile_field', 'psr_skip_delete_field_in_core' );
+function psr_skip_delete_field_in_core( $field ) {
+    if ( is_admin() )
+        return $field;
+
+    if ( $field === 'psr_rating' )
+        return false;
+}
+
+// вывод перед счетчиками
 add_action( 'wp_footer', 'psr_before_counters', 6 );
 function psr_before_counters() {
     if ( ! rcl_is_office() )
@@ -73,12 +83,26 @@ function psr_before_counters() {
     $blk = psr_get_box();
 
 // Поместим блок перед выбранным местом
-// удалим из фронтенда в вкладке "профиль" настройку персонального рейтинга #profile-field-psr_rating
     $out = "<script>
 jQuery(document).ready(function(){
 jQuery('$div').append('$blk');
-jQuery('#rcl-office #profile-field-psr_rating').remove();
 });
+</script>";
+    echo $out;
+}
+
+// отдельно вырежем данные в фронте
+add_action( 'wp_footer', 'psr_hide_data', 5 );
+function psr_hide_data() {
+    global $user_ID;
+
+    if ( ! rcl_is_office( $user_ID ) )
+        return false;
+
+    $out = "<script>
+rcl_add_action('rcl_footer','psr_hide');
+rcl_add_action('rcl_upload_tab','psr_hide');
+function psr_hide(){jQuery('#rcl-office #profile-field-psr_rating').remove();}
 </script>";
     echo $out;
 }

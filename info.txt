@@ -1,5 +1,5 @@
 Name: Profile Star Rating;
-Version: 1.0;
+Version: 1.1;
 Support Core: 16.17.0;
 Description: Рейтинг пользователю от администрации, от -5 до 5. В кабинете у пользователя показывается звездный рейтинг;
 Author: Владимир Дружаев (Otshelnik-Fm);
