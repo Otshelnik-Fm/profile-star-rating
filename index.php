@@ -62,8 +62,11 @@ function psr_skip_delete_field_in_core( $field ) {
     if ( is_admin() )
         return $field;
 
-    if ( $field === 'psr_rating' )
+    if ( $field['slug'] === 'psr_rating' ) {
         return false;
+    }
+
+    return $field;
 }
 
 // вывод перед счетчиками
