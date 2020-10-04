@@ -182,72 +182,52 @@ function psr_rating_profile( $fields ) {
 }
 
 // и немного обрежем там что не надо
-add_filter( 'rcl_custom_field_options', 'psr_exclude_variations', 10, 3 );
-function psr_exclude_variations( $options, $field, $post_type ) {
+add_filter( 'rcl_field_options', 'psr_exclude_variations', 10, 3 );
+function psr_exclude_variations( $options, $field, $manager_id ) {
     // это не страница "поля профиля"
-    if ( $post_type !== 'profile' )
+    if ( $manager_id !== 'profile' )
         return $options;
 
     // это не наше поле
-    if ( isset( $field['slug'] ) && ( $field['slug'] !== 'psr_rating' ) )
+    if ( isset( $field->slug ) && ( $field->slug !== 'psr_rating' ) )
         return $options;
 
-    // что нам не нужно - удалим
-    foreach ( $options as $option ) {
-        // первое значение
-        if ( $option['slug'] == 'empty-first' )
-            continue;
-
-        // подпись к полю
-        if ( $option['slug'] == 'notice' )
-            continue;
-
-        // добавляемые значения
-        if ( $option['slug'] == 'values' )
-            continue;
-
-        // отображать для других пользователей
-        if ( $option['slug'] == 'req' )
-            continue;
-        //
-        // редактируется администрацией
-        if ( $option['slug'] == 'admin' ) {
-            $option['values'] = array( 'Да' );
+    // оставим "редактируется только администрацией сайта"
+    foreach ( $options as $k => $option ) {
+        if ( $option['slug'] != 'admin' ) {
+            unset( $options[$k] );
         }
-        //    continue;
-        //
-        // отображать в заказе
-        if ( $option['slug'] == 'order' )
-            continue;
-
-        // обязательное поле
-        if ( $option['slug'] == 'required' )
-            continue;
-
-        // Макс. кол-во знаков
-        if ( $option['slug'] == 'maxlength' )
-            continue;
-
-        // отображать в форме регистрации
-        if ( $option['slug'] == 'register' )
-            continue;
-
-        // Фильтровать пользователей по значению этого поля
-        if ( $option['slug'] == 'filter' )
-            continue;
-
-        $opt[] = $option;
     }
 
-    return $opt;
+    $options['admin']['values'] = array( 'Да' );
+
+    return $options;
 }
 
 // добавим в ЛК (таб профиль)
-add_filter( 'rcl_profile_fields', 'psr_add_form', 10 );
-function psr_add_form( $fields ) {
+add_filter( 'rcl_profile_fields', 'psr_add_form', 10, 2 );
+function psr_add_form( $fields, $args ) {
+    $rating = psr_add_data();
+    $type   = 'select';
+
+    // чтоб сам юзер не менял себе значение
+    if ( ! current_user_can( 'manage_options' ) ) {
+        $val_rating = get_user_meta( $args['user_id'], 'psr_rating', true );
+
+        $rating = ( $val_rating ) ? $val_rating : '';
+
+        $type = 'hidden';
+    }
+
     foreach ( $fields as $field ) {
         if ( $field['slug'] === 'psr_rating' ) {
-            $field['values'] = psr_add_data();
+            $field['type'] = $type;
+
+            if ( $type == 'select' ) {
+                $field['values'] = $rating;
+            } else if ( $type == 'hidden' ) {
+                $field['value'] = $rating;
+            }
         }
 
         $opt[] = $field;
